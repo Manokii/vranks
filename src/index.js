@@ -4,9 +4,33 @@ import './index.css';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
 
+
+import { BrowserRouter as Router } from "react-router-dom";
+import { CssBaseline } from "@material-ui/core";
+import MyTheme from "./Theme";
+
+import { createStore } from "redux";
+import Reducers from "./redux/allReducers";
+import { Provider } from "react-redux";
+import "./Fonts.css";
+
+
+export let store = createStore(
+  Reducers,
+  // remove this before deploying to production
+  window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
+);
+
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <Provider store={store}>
+      <Router>
+        <MyTheme>
+          <CssBaseline />
+          <App />
+        </MyTheme>
+      </Router>
+    </Provider>
   </React.StrictMode>,
   document.getElementById('root')
 );
