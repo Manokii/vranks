@@ -1,4 +1,4 @@
-import {useDispatch, useSelector} from 'react-redux'; 
+import React, {useDispatch, useSelector} from 'react-redux'; 
 import {setExample} from './redux/actions';
 
 const SampleReduxUsage = (props) => {

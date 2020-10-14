@@ -1,5 +1,4 @@
 import React from 'react'
-
 import useStorage from '../hooks/useStorage';
 
 // takes file & setFile as props
