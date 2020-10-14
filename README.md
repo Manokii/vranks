@@ -1,68 +1,112 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Firestore Config
 
-## Available Scripts
+### Sample Firebase Config
 
-In the project directory, you can run:
+You can get your firebase config data in [Firebase Console](https://console.firebase.google.com/project/[PROJECT-ID]/settings/general/web)
 
-### `npm start`
+#### Here is an example data:
 
-Runs the app in the development mode.<br />
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```js
+{
+    apiKey: "ABC123",
+    authDomain: "vranks-4f50b.firebaseapp.com",
+    databaseURL: "https://vranks-4f50b.firebaseio.com",
+    projectId: "vranks-4f50b",
+    storageBucket: "vranks-4f50b.appspot.com",
+    messagingSenderId: "720882747924",
+    appId: "1:720882747924:web:c82be28827108d4512b501",
+    measurementId: "G-04J7NRSK6F"
+}
+```
 
-The page will reload if you make edits.<br />
-You will also see any lint errors in the console.
+Then you set it up in `/firebase/config`
 
-### `npm test`
+```js
+import firebase from "firebase/app";
+import "firebase/firestore";
+import "firebase/storage";
+import "firebase/analytics";
 
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+var firebaseConfig = {
+  apiKey: "ABC123",
+  authDomain: "vranks-4f50b.firebaseapp.com",
+  databaseURL: "https://vranks-4f50b.firebaseio.com",
+  projectId: "vranks-4f50b",
+  storageBucket: "vranks-4f50b.appspot.com",
+  messagingSenderId: "720882747924",
+  appId: "1:720882747924:web:c82be28827108d4512b501",
+  measurementId: "G-04J7NRSK6F",
+};
 
-### `npm run build`
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+firebase.analytics();
+const projectStorage = firebase.storage();
+const projectFirestore = firebase.firestore();
+const timestamp = firebase.firestore.FieldValue.serverTimestamp;
 
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
+export { projectStorage, projectFirestore, timestamp };
+```
 
-The build is minified and the filenames include the hashes.<br />
-Your app is ready to be deployed!
+## Firestore Hook Usage
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```js
+import useFirestore from './hooks/useFirestore';
 
-### `npm run eject`
+const App = (props) => {
+   const docs = useFirestore('collection_name');
+   return (
+      // ...
+   );
+}
+```
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## Storage Hook Usage
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+```js
+import React from 'react'
+import useStorage from '../hooks/useStorage';
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+// takes file & setFile as props
+const SampleStorageUsage = ({file, setFile}) => {
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+   const { progress, url } = useStorage(file);
 
-## Learn More
+   useEffect(() => {
+       if (url) {
+         setFile(null);
+       }
+   }, [url, setFile]);
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+   return (
+      // ...
+   )
+}
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+export default SampleStorageUsage
 
-### Code Splitting
+```
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
+## React Redux Usage
 
-### Analyzing the Bundle Size
+```js
+import React, {useDispatch, useSelector} from 'react-redux';
+import {setExample} from './redux/actions';
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
+const SampleReduxUsage = (props) => {
+   const example = useSelector(state => state.example)
+   const dispatch = useDispatch();
 
-### Making a Progressive Web App
+   dipatch(setExample({data: 'sample data here'}))
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
+   return (
+      // ...
+   )
+}
+```
 
-### Advanced Configuration
+Only select the actions that you're going to use
 
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+```js
+import { setExample } from "./redux/actions";
+```
