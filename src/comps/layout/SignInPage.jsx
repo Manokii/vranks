@@ -28,7 +28,7 @@ const SignInPage = () => {
       </Typography>
 
       <Button variant="outlined" color="default" onClick={signInWithGoogle}>
-        Sign In
+        Sign In With Google 
       </Button>
     </div>
   );
