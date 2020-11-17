@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { projectFirestore } from "../../firebase/config";
 import { Container, makeStyles, Typography, Button } from "@material-ui/core";
@@ -40,6 +40,11 @@ const TournamentList = ({ history }) => {
     }
   );
 
+  useEffect(() => {
+    if(!tournaments) return
+    console.log(tournaments)
+  }, [tournaments])
+
   return (
     <div className={classes.tournamentList}>
       {error && (
@@ -54,8 +59,12 @@ const TournamentList = ({ history }) => {
       )}
       {tournaments && (
         <Container className={classes.container} maxWidth="md">
-          {tournaments.length ? (
-            <div className="tournaments"></div>
+          {tournaments.length ? (tournaments.map(t => (
+            <div key={t.uid} className="tournaments">
+              {t.uid}
+            </div>
+          ))
+            
           ) : (
             <div className="no-tournament">
               <Typography variant="button">

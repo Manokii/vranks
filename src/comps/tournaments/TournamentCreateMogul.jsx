@@ -7,14 +7,14 @@ import {
   Snackbar,
 } from "@material-ui/core";
 import axios from "axios";
+import isDev from '../../IsDev'
 
 const TournamentCreateMogul = ({
-  setError,
-  error,
+  setAlert,
+  alert,
   setLoadingState,
   loading,
   setLoadedTournament: setTournament,
-  setLoadedTournamentSummary: summarize,
 }) => {
   const [mogulId, setMogulId] = useState("");
 
@@ -22,33 +22,17 @@ const TournamentCreateMogul = ({
     setLoadingState(true);
     axios
       .get(
-        `https://noki-cors.herokuapp.com/polling.mogul.gg:443/API/Tournament/${mogulId}?lastUpdatedDateTime`,
+        `https://${isDev() && 'noki-cors.herokuapp.com/'}polling.mogul.gg${isDev() && ':443'}/API/Tournament/${mogulId}?lastUpdatedDateTime`,
         {
           headers: { "arena-api-key": "C434EDE3-2E7E-4B9D-A070-58B2CF94846D" },
         }
       )
       .then(({ data: { Response } }) => {
         if (Response.Game.GameName !== "Valorant")
-          throw { message: "Error: The game is not Valorant." };
-
-        const data = {
-          mogulId: Response.TournamentId,
-          startDate: Response.TournamentLiveDateTime,
-          title: Response.TournamentTitle,
-          type: Response.TournamentTypeName,
-          host: {
-            name: Response.EntityOwnerProfile.DisplayName,
-            mogulId: Response.EntityOwnerProfile.EntityId,
-            LogoUrl: Response.EntityOwnerProfile.LogoUrl,
-          },
-          participants: Response.Participants.length,
-          rounds: Response.RoundRules.length,
-          matches: Response.Matches.length,
-        };
-        summarize({ data, type: "mogul" });
+          throw new Error("Error: The game is not Valorant.")
         setTournament({ data: Response, type: "mogul" });
       })
-      .catch((err) => setError(err.message))
+      .catch((err) => setAlert(err.message))
       .then((_) => setLoadingState(false));
   };
 
@@ -67,7 +51,7 @@ const TournamentCreateMogul = ({
         name="mogulId"
         helperText={
           <>
-            https://mogul.gg/tournaments/details/<strong>42991</strong>/
+            https://mogul.gg/tournaments/details/<strong>43413</strong>/
           </>
         }
       />

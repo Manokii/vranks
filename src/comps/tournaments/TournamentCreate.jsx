@@ -10,6 +10,8 @@ import {
 import MuiAlert from "@material-ui/lab/Alert";
 import Mogul from "./TournamentCreateMogul";
 import SaveIcon from "@material-ui/icons/Save";
+import { projectFirestore as db } from "../../firebase/config";
+import axios from "axios";
 
 function Alert(props) {
   return <MuiAlert elevation={6} variant="filled" {...props} />;
@@ -65,22 +67,93 @@ const styles = makeStyles((theme) => ({
   },
 }));
 
+
+// ====================== Functions ===========================
+const convertDataFromMogul = async (loadedTournament) => {
+  const { data } = loadedTournament;
+  let structured = {
+    bracketingPlatform: 'mogul',
+    mogulOwnerId: data.EntityOwnerProfile.EntityName,
+    mogulOwnerUid: data.EntityOwnerProfile.EntityId,
+    region: data.GamingServerRegionName,
+    dateCreated: data.CreatedDateTime,
+    isLan: data.LanModeEnabled,
+    isPublic: data.IsPublic,
+    documentStatus: 'pending',
+    status: data.TournamentIsComplete ?  'finished'  : data.TournamentIsLive ? 'ongoing' : 'upcoming',
+    allowedCountryList: data.AllowedCountryList.map((country) => country.AddressCountryCode),
+    dateTournamentPublic: data.TournamentLiveDateTime,
+    dateTournamentStart: data.TournamentStartDateTime,
+    dateTournamentEnd: data.TournamentStartDateTime,
+    title: data.TournamentTitle,
+    titleSub: data.TournamentSubTitle,
+    tags: data.TournamentStaticTags,
+    description: data.TournamentDescription,
+    game: data.Game.GameName.toLowerCase(),
+    type: data.TournamentTypeName,
+    logoUrl: data.LogoUrl,
+    matchIds: data.Matches.filter(({EntityParticipantA: a, EntityParticipantB: b}) => ![a.IsBye, a.NoShow, a.Forfeit, b.IsBye, b.NoShow, b.Forfeit].some(e => e)).map(({TournamentMatchId}) => 
+      TournamentMatchId
+    )
+  };
+
+  return structured
+};
+
+// ====================== Tournament Create ===================
+
 const TournamentCreate = () => {
   const classes = styles();
   const [loading, setLoadingState] = useState(false);
-  const [error, setError] = useState(null);
+  const [alert, setAlert] = useState();
   const [loadedTournament, setLoadedTournament] = useState(null);
   const [loadedTournamentSummary, setLoadedTournamentSummary] = useState(null);
 
   const closeSnackbar = (event, reason) => {
     if (reason === "clickaway") return;
-    setError(null);
+    setAlert(null);
   };
 
   useEffect(() => {
     if (!loadedTournament) return;
     console.log(loadedTournament);
+    if (loadedTournament.type === "mogul") {
+      convertDataFromMogul(loadedTournament).then(setLoadedTournamentSummary);
+    } else if (loadedTournament.type === "manual") {
+      console.log("Adds tournament manually");
+    }
   }, [loadedTournament]);
+
+
+  useEffect(() => {
+    if(!loadedTournamentSummary) return
+    console.log(loadedTournamentSummary)
+  }, [loadedTournamentSummary])
+
+  const testShtHere = async () => {
+    console.log(loadedTournamentSummary)
+  };
+  
+  const save = async () => {
+    const pendingRef = db.collection('pending-tournaments').doc(String(loadedTournament.data.TournamentId))
+    const tRef = db.collection('tournaments').doc(String(loadedTournament.data.TournamentId))
+    try { 
+      const pendingSnap = await pendingRef.get()
+      const tSnap = await tRef.get()
+      if (pendingSnap.exists) {
+        setAlert( {message: `Tournament is already in pending queue`, severity: 'info'})
+      } else if (tSnap.exists && tSnap.data() === loadedTournamentSummary) {
+          setAlert( {message: `Tournament already exists`, severity: 'warning'})
+      } else {
+        pendingRef.set(loadedTournamentSummary).then(() => {
+          setAlert( {message: `Tournament ${tSnap.id} Successfully Updated`, severity: 'success'})
+        })
+      }
+    } catch (err) {
+      console.log(err)
+      setAlert(err)
+    }
+  }
 
   return (
     <div className={classes.createTournament}>
@@ -88,13 +161,12 @@ const TournamentCreate = () => {
         <div className="content">
           <div className="inputs">
             <Mogul
-              error={error}
-              setError={setError}
+              alert={alert}
+              setAlert={setAlert}
               closeSnackbar={closeSnackbar}
               setLoadingState={setLoadingState}
               loading={loading}
               setLoadedTournament={setLoadedTournament}
-              setLoadedTournamentSummary={setLoadedTournamentSummary}
             />
 
             <Typography
@@ -105,16 +177,18 @@ const TournamentCreate = () => {
             </Typography>
           </div>
 
-          {Boolean(loadedTournament) && (
+          {Boolean(loadedTournamentSummary) && (
             <div className="output">
-              {JSON.stringify(loadedTournamentSummary.data, null, 3)}
+              {JSON.stringify(loadedTournamentSummary, null, 3)}
             </div>
           )}
         </div>
+        <Button onClick={testShtHere}>Test</Button>
       </Container>
 
       <Fab
-        disabled={!Boolean(loadedTournament)}
+        disabled={!Boolean(loadedTournamentSummary && loadedTournament)}
+        onClick={save}
         color="primary"
         variant="extended"
         className={classes.save}
@@ -125,11 +199,11 @@ const TournamentCreate = () => {
 
       <Snackbar
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        open={Boolean(error)}
+        open={Boolean(alert)}
         autoHideDuration={6000}
         onClose={closeSnackbar}
       >
-        <Alert severity="error">{error}</Alert>
+        <Alert severity={alert?.severity || 'error'}>{alert?.message}</Alert>
       </Snackbar>
     </div>
   );
