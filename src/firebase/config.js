@@ -2,6 +2,7 @@ import firebase from 'firebase/app'
 import 'firebase/firestore'
 import 'firebase/auth'
 import 'firebase/storage'
+import 'firebase/functions'
 import 'firebase/analytics'
 
 var firebaseConfig = {
@@ -21,7 +22,13 @@ firebase.analytics();
 const projectStorage = firebase.storage();
 const projectFirestore = firebase.firestore();
 const projectAuth = firebase.auth()
+const projectFunctions = firebase.functions()
 const timestamp = firebase.firestore.FieldValue.serverTimestamp;
+
+if(window.location.hostname === 'localhost') { 
+  console.log('running on local firestore')
+  projectFirestore.settings({host: 'localhost:5002', ssl: false})
+}
 
 export default firebase
 export { projectStorage, projectFirestore, timestamp, projectAuth};
